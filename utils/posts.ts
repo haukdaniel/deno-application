@@ -20,7 +20,7 @@ export const loadPost = async (id: string): Promise<Post | null> => {
   }
 
   const { attrs, body } = extract(text);
-  const params = attrs as Record<string,string>
+  const params = attrs as Record<string, string>;
   const publishAt = new Date(params.publish_at);
   return {
     id,
@@ -28,5 +28,16 @@ export const loadPost = async (id: string): Promise<Post | null> => {
     publishAt,
     snippet: params.snippet,
     content: body,
+  };
+};
+
+export const listPosts = async (): Promise<Post[]> => {
+  const promises = [];
+  for await (const entry of Deno.readDir("./data/posts")) {
+    const id = entry.name.replace(".md", "");
+    promises.push(loadPost(id));
   }
+  const posts = await Promise.all(promises) as Post[];
+  posts.sort((a, b) => b.publishAt.getTime() - a.publishAt.getTime());
+  return posts;
 };
